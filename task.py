@@ -4,8 +4,8 @@ class Task(object):
     """docstring for Task"""
 
     # metrics: millions of instructions
-    TASK_COMPUTATION_REQUIRED_LOWER_BOUND = 0.2
-    TASK_COMPUTATION_REQUIRED_UPPER_BOUND = 2
+    TASK_COMPUTATION_REQUIRED_LOWER_BOUND = 2
+    TASK_COMPUTATION_REQUIRED_UPPER_BOUND = 60
     # metrics: MB (megabyte)
     TASK_MEMORY_REQUIRED_LOWER_BOUND = 0.5
     TASK_MEMORY_REQUIRED_UPPER_BOUND = 20
