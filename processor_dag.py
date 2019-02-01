@@ -20,13 +20,15 @@ class ProcessorDAG(object):
         self.no_of_clouds = int(random.uniform(self.__class__.NUMBER_OF_CLOUDS_LOWER_BOUND, 
             self.__class__.NUMBER_OF_CLOUDS_UPPER_BOUND))
 
+        index = 0
         for i in range(0, self.no_of_fogs):
-            new_fog = Processor(True)
+            new_fog = Processor(id, True)
             new_fog.generate_random_values()
             self.processors.append(new_fog)
+            index = i
 
-        for i in range(0, self.no_of_clouds):
-            new_cloud = Processor(False)
+        for i in range(index, self.no_of_fogs + self.no_of_clouds):
+            new_cloud = Processor(id, False)
             new_cloud.generate_random_values()
             self.processors.append(new_cloud)
 
@@ -88,7 +90,7 @@ class ProcessorDAG(object):
 
                 is_fog = lines[current_line_index].split()[1] == "True"
 
-                new_processor = Processor(is_fog)
+                new_processor = Processor(i, is_fog)
                 new_processor.processing_rate = details_of_row[0]
                 new_processor.ram = details_of_row[1]
                 new_processor.storage = details_of_row[2]
@@ -98,3 +100,36 @@ class ProcessorDAG(object):
                 self.processors.append(new_processor)
 
                 current_line_index += 1
+
+    def get_most_powerful_processor(self):
+        most_powerful_processor = self.processors[0]
+
+        for i in range(1, len(self.processors)):
+            if self.processors[i].processing_rate > most_powerful_processor.processing_rate:
+                most_powerful_processor = self.processors[i]
+        
+        return most_powerful_processor
+
+    @staticmethod
+    def get_bandwidth_to_use(from_processor, to_processor):
+        bandwidth_to_use = 0
+
+        if from_processor.is_fog and to_processor.is_fog:
+            bandwidth_to_use = Processor.BANDWIDTH_LAN
+        else:
+            bandwidth_to_use = min(from_processor.wan_upload_bandwidth, to_processor.wan_download_bandwidth)
+        
+        return bandwidth_to_use
+
+    @staticmethod
+    def get_communication_time(from_processor, to_processor, amount_of_data):
+        communication_time = 0
+
+        if from_processor.id == to_processor.id:
+            communication_time = 0
+        else:           
+            bandwidth_to_use = ProcessorDAG.get_bandwidth_to_use(from_processor, to_processor)
+            
+            communication_time = amount_of_data / bandwidth_to_use
+        
+        return communication_time

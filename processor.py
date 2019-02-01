@@ -25,8 +25,9 @@ class Processor(object):
     STORAGE_CLOUD_LOWER_BOUND = 8192
     STORAGE_CLOUD_UPPER_BOUND = 102400
     """docstring for Processor"""
-    def __init__(self, is_fog):
+    def __init__(self, id, is_fog):
         super(Processor, self).__init__()
+        self.id = id
         self.is_fog = is_fog
         self.processing_rate = 0
         self.ram = 0
