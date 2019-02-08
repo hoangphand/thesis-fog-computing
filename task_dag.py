@@ -7,6 +7,9 @@ import math
 class TaskDAG(object):
     """docstring for TaskDAG"""
     # Attributes
+    MIN_LAYERS = 3
+    MIN_NODES_PER_LAYER = 1
+    MIN_OUT_DEGREE = 1
 
     # Methods
     def __init__(self):
@@ -23,15 +26,16 @@ class TaskDAG(object):
 
         pass
 
-    def random_init(self, id, no_of_tasks, alpha):
+    def random_init_prob(self, id, no_of_tasks, alpha):
         self.id = id
+        self.alpha = alpha
         # generate randomly number of layers of the graph
-        min_layers = 3
+        min_layers = self.__class__.MIN_LAYERS
         max_layers = round(math.sqrt(no_of_tasks) / alpha * 2 - min_layers)
         self.height = int(round(random.uniform(min_layers, max_layers)))
 
         # determine the min and max number of task nodes per layer
-        min_nodes_per_layer = 1
+        min_nodes_per_layer = self.__class__.MIN_NODES_PER_LAYER
         max_nodes_per_layer = round(math.sqrt(no_of_tasks) * alpha * 2 - min_nodes_per_layer)
 
         # probability of having an edge from a node to another one
@@ -94,6 +98,179 @@ class TaskDAG(object):
 
                     if random_probability < probability:
                         self.tasks[i].add_edge_random_constraint(self.tasks[j])
+
+        # add edges from 'dummy' entry task to those have no predecessors
+        # and add edges to 'dummy' exit task from those have no successors
+        for i in range(1, no_of_tasks + 1):
+            if (len(self.tasks[i].predecessors) == 0):
+                self.tasks[0].add_edge(self.tasks[i], 0)
+
+            if (len(self.tasks[i].successors) == 0):
+                self.tasks[i].add_edge(self.tasks[no_of_tasks + 1], 0)
+
+        self.height = len(self.layers)
+
+        pass
+
+    def random_init_layer_based(self, id, no_of_tasks, alpha):
+        self.id = id
+        self.alpha = alpha
+        # generate randomly number of layers of the graph
+        min_layers = self.__class__.MIN_LAYERS
+        max_layers = round(math.sqrt(no_of_tasks) / alpha * 2 - min_layers)
+        self.height = int(round(random.uniform(min_layers, max_layers)))
+
+        # determine the min and max number of task nodes per layer
+        min_nodes_per_layer = self.__class__.MIN_NODES_PER_LAYER
+        max_nodes_per_layer = round(math.sqrt(no_of_tasks) * alpha * 2 - min_nodes_per_layer)
+
+        # initialize a list of empty tasks (with 2 dummy tasks: entry and exit)
+        for i in range(0, no_of_tasks + 2):
+            self.tasks.append(Task(i, 0, 0, 0, 0))
+
+        # add the 'dummy' entry task into the 0th 'dummy' layer
+        self.layers.append([self.tasks[0]])
+        # a counter to keep track of the current task node
+        current_node_id = 1
+        # loop through the graph height to assign task nodes
+        # but leave the last one for 'special' assignments
+        total_nodes = 0
+        for i in range(1, self.height):
+            # generate randomly number of nodes for each graph layer
+            layer_width = int(round(random.uniform(min_nodes_per_layer, max_nodes_per_layer)))
+            new_layer = []
+
+            for j in range(0, layer_width):
+                new_layer.append(self.tasks[current_node_id])
+                # generate random constraint values for tasks
+                self.tasks[current_node_id].generate_random_values()
+                # set layer id to task in which task belongs to
+                self.tasks[current_node_id].layer_id = i
+
+                current_node_id += 1
+
+                if (current_node_id == no_of_tasks):
+                    break
+
+            # add the new layer into the graph
+            self.layers.append(new_layer)
+
+            # stop when the total number of tasks reach the pre-defined number
+            if (current_node_id == no_of_tasks):
+                break
+
+        # add all the tasks left to the 'last' layer
+        new_layer = []
+        for i in range(current_node_id, no_of_tasks + 1):
+            new_layer.append(self.tasks[current_node_id])
+            self.tasks[current_node_id].generate_random_values()
+            self.tasks[current_node_id].layer_id = self.height
+            current_node_id += 1
+
+        self.layers.append(new_layer)
+
+        # add a 'dummy' layer for 'dummy' exit task
+        self.layers.append([self.tasks[no_of_tasks + 1]])
+        self.tasks[no_of_tasks + 1].layer_id = self.height + 1
+
+        # generate edges for the graph
+        for i in range(1, len(self.layers) - 2):
+            current_layer = self.layers[i]
+            possible_destination_nodes = []
+
+            for j in range(i + 1, len(self.layers) - 1):
+                possible_destination_nodes.extend(self.layers[j])
+
+            for j in range(0, len(self.layers[i])):
+                out_degree = random.randint(self.__class__.MIN_OUT_DEGREE, len(possible_destination_nodes))
+                destination_nodes = random.sample(possible_destination_nodes, out_degree)
+
+                for k in range(0, len(destination_nodes)):
+                    self.layers[i][j].add_edge_random_constraint(destination_nodes[k])
+
+        for i in range(1, no_of_tasks + 1):
+            if (len(self.tasks[i].predecessors) == 0):
+                self.tasks[0].add_edge(self.tasks[i], 0)
+
+            if (len(self.tasks[i].successors) == 0):
+                self.tasks[i].add_edge(self.tasks[no_of_tasks + 1], 0)
+
+        self.height = len(self.layers)
+
+        pass
+
+    def random_init_ajacent_layer(self, id, no_of_tasks, alpha):
+        self.id = id
+        self.alpha = alpha
+        # generate randomly number of layers of the graph
+        min_layers = self.__class__.MIN_LAYERS
+        max_layers = round(math.sqrt(no_of_tasks) / alpha * 2 - min_layers)
+        self.height = int(round(random.uniform(min_layers, max_layers)))
+
+        # determine the min and max number of task nodes per layer
+        min_nodes_per_layer = self.__class__.MIN_NODES_PER_LAYER
+        max_nodes_per_layer = round(math.sqrt(no_of_tasks) * alpha * 2 - min_nodes_per_layer)
+
+        # initialize a list of empty tasks (with 2 dummy tasks: entry and exit)
+        for i in range(0, no_of_tasks + 2):
+            self.tasks.append(Task(i, 0, 0, 0, 0))
+
+        # add the 'dummy' entry task into the 0th 'dummy' layer
+        self.layers.append([self.tasks[0]])
+        # a counter to keep track of the current task node
+        current_node_id = 1
+        # loop through the graph height to assign task nodes
+        # but leave the last one for 'special' assignments
+        total_nodes = 0
+        for i in range(1, self.height):
+            # generate randomly number of nodes for each graph layer
+            layer_width = int(round(random.uniform(min_nodes_per_layer, max_nodes_per_layer)))
+            new_layer = []
+
+            for j in range(0, layer_width):
+                new_layer.append(self.tasks[current_node_id])
+                # generate random constraint values for tasks
+                self.tasks[current_node_id].generate_random_values()
+                # set layer id to task in which task belongs to
+                self.tasks[current_node_id].layer_id = i
+
+                current_node_id += 1
+
+                if (current_node_id == no_of_tasks):
+                    break
+
+            # add the new layer into the graph
+            self.layers.append(new_layer)
+
+            # stop when the total number of tasks reach the pre-defined number
+            if (current_node_id == no_of_tasks):
+                break
+
+        # add all the tasks left to the 'last' layer
+        new_layer = []
+        for i in range(current_node_id, no_of_tasks + 1):
+            new_layer.append(self.tasks[current_node_id])
+            self.tasks[current_node_id].generate_random_values()
+            self.tasks[current_node_id].layer_id = self.height
+            current_node_id += 1
+
+        self.layers.append(new_layer)
+
+        # add a 'dummy' layer for 'dummy' exit task
+        self.layers.append([self.tasks[no_of_tasks + 1]])
+        self.tasks[no_of_tasks + 1].layer_id = self.height + 1
+
+        # generate edges for the graph
+        for i in range(1, len(self.layers) - 2):
+            current_layer = self.layers[i]
+            possible_destination_nodes = self.layers[i + 1]
+
+            for j in range(0, len(self.layers[i])):
+                out_degree = random.randint(self.__class__.MIN_OUT_DEGREE, len(possible_destination_nodes))
+                destination_nodes = random.sample(possible_destination_nodes, out_degree)
+
+                for k in range(0, len(destination_nodes)):
+                    self.layers[i][j].add_edge_random_constraint(destination_nodes[k])
 
         for i in range(1, no_of_tasks + 1):
             if (len(self.tasks[i].predecessors) == 0):
