@@ -1,6 +1,6 @@
 from __future__ import division
-from processor_dag import ProcessorDAG
-from task_dag import TaskDAG
+from processorDag import ProcessorDAG
+from taskDag import TaskDAG
 from schedule import Schedule
 from collections import deque
 import sys
@@ -12,86 +12,86 @@ class Heuristics(object):
         pass
 
     @staticmethod
-    def HEFT(task_dag, processor_dag):
-        schedule = Schedule(task_dag, processor_dag)
+    def HEFT(taskDag, processorDag):
+        schedule = Schedule(taskDag, processorDag)
 
         # prioritize tasks
-        ranks = Heuristics.prioritize_tasks(task_dag, processor_dag)
-        sorted_indices = sorted(range(len(ranks)), key = ranks.__getitem__, reverse = True)
+        ranks = Heuristics.prioritize_tasks(taskDag, processorDag)
+        sortedIndices = sorted(range(len(ranks)), key = ranks.__getitem__, reverse = True)
 
-        # print(sorted_indices)
+        # print(sortedIndices)
         # init list of unscheduled tasks
-        unscheduled_tasks = deque(sorted_indices)
+        unscheduledTasks = deque(sortedIndices)
         # get the entry task by popping the first task from the unscheduled list
-        entry_task = task_dag.tasks[unscheduled_tasks.popleft()]
+        entryTask = taskDag.tasks[unscheduledTasks.popleft()]
         # get the most powerful processor in the network
-        most_powerful_processor = processor_dag.get_most_powerful_processor()
+        mostPowerfulProcessor = processorDag.getMostPowerfulProcessor()
 
-        schedule.add_new_slot(most_powerful_processor, entry_task, 0)
+        schedule.add_new_slot(mostPowerfulProcessor, entryTask, 0)
 
         count = 0
         # loop through all unscheduled tasks
-        while (len(unscheduled_tasks) > 0):
-            current_task = task_dag.tasks[unscheduled_tasks.popleft()]
+        while (len(unscheduledTasks) > 0):
+            currentTask = taskDag.tasks[unscheduledTasks.popleft()]
 
             # calculate ready time to calculate current task on all the processors in the network
-            best_slot = None
-            best_aft = sys.maxint
-            best_processor = None
+            bestSlot = None
+            bestAFT = sys.maxint
+            bestProcessor = None
 
-            for i in range(0, len(processor_dag.processors)):
-                current_processor = processor_dag.processors[i]
-                current_best_slot = schedule.get_best_slot_for_task_on_processor(current_processor, current_task)
+            for i in range(0, len(processorDag.processors)):
+                currentProcessor = processorDag.processors[i]
+                currentBestSlot = schedule.getBestSlotForTaskOnProcessor(currentProcessor, currentTask)
 
-                if current_best_slot.end < best_aft:
-                    best_aft = current_best_slot.end
-                    best_slot = current_best_slot
-                    best_processor = current_processor
+                if currentBestSlot.end < bestAFT:
+                    bestAFT = currentBestSlot.end
+                    bestSlot = currentBestSlot
+                    bestProcessor = currentProcessor
 
-            schedule.add_new_slot(best_processor, current_task, best_slot.start)
+            schedule.add_new_slot(bestProcessor, currentTask, bestSlot.start)
 
         return schedule
 
     @staticmethod
-    def prioritize_tasks(task_dag, processor_dag):
-        total_processing_rate = 0
-        total_upload_bandwidth = 0
+    def prioritize_tasks(taskDag, processorDag):
+        totalProcessingRate = 0
+        totalUploadBandwidth = 0
 
-        for i in range(0, len(processor_dag.processors)):
-            total_processing_rate += processor_dag.processors[i].processing_rate
-            total_upload_bandwidth += processor_dag.processors[i].wan_upload_bandwidth
+        for i in range(0, len(processorDag.processors)):
+            totalProcessingRate += processorDag.processors[i].processingRate
+            totalUploadBandwidth += processorDag.processors[i].wanUploadBandwidth
 
-        total_no_of_processors = len(processor_dag.processors)
+        totalNoOfProcessors = len(processorDag.processors)
 
-        avg_processing_rate = total_processing_rate / total_no_of_processors
-        avg_upload_bandwidth = total_upload_bandwidth / total_no_of_processors
+        avgProcessingRate = totalProcessingRate / totalNoOfProcessors
+        avgUploadBandwidth = totalUploadBandwidth / totalNoOfProcessors
 
         ranks = []
 
-        for i in range(0, len(task_dag.tasks)):
+        for i in range(0, len(taskDag.tasks)):
             ranks.append(0)
 
-        for i in range(0, len(task_dag.layers)):
-            layer_id = len(task_dag.layers) - i - 1
+        for i in range(0, len(taskDag.layers)):
+            layerId = len(taskDag.layers) - i - 1
 
-            for j in range(0, len(task_dag.layers[layer_id])):
-                task_id = len(task_dag.layers[layer_id]) - j - 1
+            for j in range(0, len(taskDag.layers[layerId])):
+                taskId = len(taskDag.layers[layerId]) - j - 1
 
-                avg_computation_cost = task_dag.layers[layer_id][task_id].computation_required / avg_processing_rate
+                avgComputationCost = taskDag.layers[layerId][taskId].computationRequired / avgProcessingRate
 
-                if (len(task_dag.layers[layer_id][task_id].successors) == 0):
-                    ranks[task_dag.layers[layer_id][task_id].id] = avg_computation_cost
+                if (len(taskDag.layers[layerId][taskId].successors) == 0):
+                    ranks[taskDag.layers[layerId][taskId].id] = avgComputationCost
                 else:
-                    tmp_max_successor_cost = -1
+                    tmpMaxSuccessorCost = -1
 
-                    for k in range(0, len(task_dag.layers[layer_id][task_id].successors)):
-                        current_successor = task_dag.layers[layer_id][task_id].successors[k][0]
-                        communication_cost = task_dag.layers[layer_id][task_id].successors[k][1] / avg_upload_bandwidth
-                        current_successor_cost = communication_cost + ranks[current_successor.id]
+                    for k in range(0, len(taskDag.layers[layerId][taskId].successors)):
+                        current_successor = taskDag.layers[layerId][taskId].successors[k][0]
+                        communication_cost = taskDag.layers[layerId][taskId].successors[k][1] / avgUploadBandwidth
+                        currentSuccessorCost = communication_cost + ranks[current_successor.id]
 
-                        if current_successor_cost > tmp_max_successor_cost:
-                            tmp_max_successor_cost = current_successor_cost
+                        if currentSuccessorCost > tmpMaxSuccessorCost:
+                            tmpMaxSuccessorCost = currentSuccessorCost
 
-                    ranks[task_dag.layers[layer_id][task_id].id] = avg_computation_cost + tmp_max_successor_cost
+                    ranks[taskDag.layers[layerId][taskId].id] = avgComputationCost + tmpMaxSuccessorCost
         
         return ranks

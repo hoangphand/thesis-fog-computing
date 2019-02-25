@@ -25,19 +25,19 @@ class Processor(object):
     STORAGE_CLOUD_LOWER_BOUND = 8192
     STORAGE_CLOUD_UPPER_BOUND = 102400
     """docstring for Processor"""
-    def __init__(self, id, is_fog):
+    def __init__(self, id, isFog):
         super(Processor, self).__init__()
         self.id = id
-        self.is_fog = is_fog
-        self.processing_rate = 0
+        self.isFog = isFog
+        self.processingRate = 0
         self.ram = 0
         self.storage = 0
-        self.wan_upload_bandwidth = 0
-        self.wan_download_bandwidth = 0
+        self.wanUploadBandwidth = 0
+        self.wanDownloadBandwidth = 0
 
-    def generate_random_values(self):
-        if (self.is_fog):
-            self.processing_rate = int(random.uniform(self.__class__.PROCESSING_RATE_FOG_LOWER_BOUND, 
+    def generateRandomValues(self):
+        if (self.isFog):
+            self.processingRate = int(random.uniform(self.__class__.PROCESSING_RATE_FOG_LOWER_BOUND, 
                                                     self.__class__.PROCESSING_RATE_FOG_UPPER_BOUND))
             # self.ram = int(random.uniform(self.__class__.RAM_FOG_LOWER_BOUND, 
             #                             self.__class__.RAM_FOG_UPPER_BOUND))
@@ -45,7 +45,7 @@ class Processor(object):
             self.storage = int(random.uniform(self.__class__.STORAGE_FOG_LOWER_BOUND, 
                                         self.__class__.STORAGE_FOG_UPPER_BOUND))
         else:
-            self.processing_rate = int(random.uniform(self.__class__.PROCESSING_RATE_CLOUD_LOWER_BOUND, 
+            self.processingRate = int(random.uniform(self.__class__.PROCESSING_RATE_CLOUD_LOWER_BOUND, 
                                                     self.__class__.PROCESSING_RATE_CLOUD_UPPER_BOUND))
             # self.ram = int(random.uniform(self.__class__.RAM_CLOUD_LOWER_BOUND, 
             #                             self.__class__.RAM_CLOUD_UPPER_BOUND))
@@ -53,7 +53,7 @@ class Processor(object):
             self.storage = int(random.uniform(self.__class__.STORAGE_CLOUD_LOWER_BOUND, 
                                         self.__class__.STORAGE_CLOUD_UPPER_BOUND))
 
-        self.wan_upload_bandwidth = int(random.uniform(self.__class__.BANDWIDTH_WAN_LOWER_BOUND, 
+        self.wanUploadBandwidth = int(random.uniform(self.__class__.BANDWIDTH_WAN_LOWER_BOUND, 
                                                     self.__class__.BANDWIDTH_WAN_UPPER_BOUND))
-        self.wan_download_bandwidth = int(random.uniform(self.__class__.BANDWIDTH_WAN_LOWER_BOUND, 
+        self.wanDownloadBandwidth = int(random.uniform(self.__class__.BANDWIDTH_WAN_LOWER_BOUND, 
                                                     self.__class__.BANDWIDTH_WAN_UPPER_BOUND))

@@ -17,45 +17,49 @@ class Task(object):
     TASK_MEMORY_CONSTRAINT_UPPER_BOUND = 5
 
     # Methods
-    def __init__(self, id, layer_id, computation_required, memory_required, storage_required):
+    def __init__(self, id, layerId, computationRequired, memoryRequired, storageRequired):
         super(Task, self).__init__()
         self.id = id
-        self.layer_id = layer_id
+        self.layerId = layerId
         self.predecessors = []
 
-        self.computation_required = computation_required
-        self.memory_required = memory_required
-        self.storage_required = storage_required
+        self.computationRequired = computationRequired
+        self.memoryRequired = memoryRequired
+        self.storageRequired = storageRequired
 
         self.successors = []
 
-    def add_predecessor(self, task, memory_constraint):
-        self.predecessors.append((task, memory_constraint))
+    def addPredecessor(self, task, memoryConstraint):
+        self.predecessors.append((task, memoryConstraint))
 
-    def add_successor(self, task, memory_constraint):
-        self.successors.append((task, memory_constraint))
+    def addSuccessor(self, task, memoryConstraint):
+        self.successors.append((task, memoryConstraint))
 
-    def add_edge(self, task, memory_constraint):
-        self.add_successor(task, memory_constraint)
-        task.add_predecessor(self, memory_constraint)
+    def addEdge(self, task, memoryConstraint):
+        self.addSuccessor(task, memoryConstraint)
+        task.addPredecessor(self, memoryConstraint)
 
-    def add_edge_random_constraint(self, task):
-        memory_constraint = round(random.uniform(self.__class__.TASK_MEMORY_CONSTRAINT_LOWER_BOUND, 
+    def addEdgeRandomConstraint(self, task):
+        memoryConstraint = round(random.uniform(self.__class__.TASK_MEMORY_CONSTRAINT_LOWER_BOUND, 
                                                 self.__class__.TASK_MEMORY_CONSTRAINT_UPPER_BOUND), 2)
-        self.add_successor(task, memory_constraint)
-        task.add_predecessor(self, memory_constraint)
+        self.addSuccessor(task, memoryConstraint)
+        task.addPredecessor(self, memoryConstraint)
 
-    def generate_random_values(self):
-        memory_required = round(random.uniform(self.__class__.TASK_MEMORY_REQUIRED_LOWER_BOUND, 
+    def removeEdge(self, task, memoryConstraint):
+        self.addSuccessor(task, memoryConstraint)
+        task.addPredecessor(self, memoryConstraint)
+
+    def generateRandomValues(self):
+        memoryRequired = round(random.uniform(self.__class__.TASK_MEMORY_REQUIRED_LOWER_BOUND, 
                                                 self.__class__.TASK_MEMORY_REQUIRED_UPPER_BOUND), 2)
-        self.memory_required = memory_required
+        self.memoryRequired = memoryRequired
 
         # set computation required for task
-        computation_required = round(random.uniform(self.__class__.TASK_COMPUTATION_REQUIRED_LOWER_BOUND, 
+        computationRequired = round(random.uniform(self.__class__.TASK_COMPUTATION_REQUIRED_LOWER_BOUND, 
                                                     self.__class__.TASK_COMPUTATION_REQUIRED_UPPER_BOUND), 2)
-        self.computation_required = computation_required
+        self.computationRequired = computationRequired
 
         # set storage required for task
-        storage_required = round(random.uniform(self.__class__.TASK_STORAGE_REQUIRED_LOWER_BOUND, 
+        storageRequired = round(random.uniform(self.__class__.TASK_STORAGE_REQUIRED_LOWER_BOUND, 
                                                 self.__class__.TASK_STORAGE_REQUIRED_UPPER_BOUND), 2)
-        self.storage_required = storage_required
+        self.storageRequired = storageRequired

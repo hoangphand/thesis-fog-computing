@@ -1,112 +1,112 @@
 from __future__ import division
-from processor_dag import ProcessorDAG
+from processorDag import ProcessorDAG
 from processor import Processor
-from task_dag import TaskDAG
+from taskDag import TaskDAG
 from slot import Slot
 import sys
 
 class Schedule(object):
     """docstring for Schedule"""
-    def __init__(self, task_dag, processor_dag):
+    def __init__(self, taskDag, processorDag):
         super(Schedule, self).__init__()
-        self.task_dag = task_dag
-        self.processor_dag = processor_dag
-        self.is_scheduled = False
-        self.task_execution_slot = []
-        self.processor_execution_slots = []
+        self.taskDag = taskDag
+        self.processorDag = processorDag
+        self.isScheduled = False
+        self.taskExecutionSlot = []
+        self.processorExecutionSlots = []
 
-        for i in range(0, len(processor_dag.processors)):
-            current_processor = processor_dag.processors[i]
-            self.processor_execution_slots.append([Slot(None, current_processor, 0, sys.maxint)])
+        for i in range(0, len(processorDag.processors)):
+            currentProcessor = processorDag.processors[i]
+            self.processorExecutionSlots.append([Slot(None, currentProcessor, 0, sys.maxint)])
 
-        for i in range(0, len(task_dag.tasks)):
-            self.task_execution_slot.append(None)
+        for i in range(0, len(taskDag.tasks)):
+            self.taskExecutionSlot.append(None)
 
-    def add_new_slot(self, processor, task, start_time):
-        current_processor_slots = self.processor_execution_slots[processor.id]
+    def add_new_slot(self, processor, task, startTime):
+        currentProcessorSlots = self.processorExecutionSlots[processor.id]
 
-        computation_time = task.computation_required / processor.processing_rate
-        to_be_taken_slot = start_time + computation_time
+        computationTime = task.computationRequired / processor.processingRate
+        toBeTakenSlot = startTime + computationTime
 
-        for i in range(0, len(current_processor_slots)):
-            current_slot = current_processor_slots[i]
-            if current_slot.start <= start_time and current_slot.end >= to_be_taken_slot:
-                start = start_time
-                end = to_be_taken_slot
+        for i in range(0, len(currentProcessorSlots)):
+            currentSlot = currentProcessorSlots[i]
+            if currentSlot.start <= startTime and currentSlot.end >= toBeTakenSlot:
+                start = startTime
+                end = toBeTakenSlot
 
-                new_slot = Slot(task, processor, start, end)
-                current_processor_slots.append(new_slot)
+                newSlot = Slot(task, processor, start, end)
+                currentProcessorSlots.append(newSlot)
 
-                if start != current_slot.start and end != current_slot.end:
-                    before_slot = Slot(None, processor, current_slot.start, start)
-                    after_slot = Slot(None, processor, end, current_slot.end)
+                if start != currentSlot.start and end != currentSlot.end:
+                    beforeSlot = Slot(None, processor, currentSlot.start, start)
+                    afterSlot = Slot(None, processor, end, currentSlot.end)
 
-                    current_processor_slots.append(before_slot)
-                    current_processor_slots.append(after_slot)
-                elif start == current_slot.start and end != current_slot.end:
-                    after_slot = Slot(None, processor, end, current_slot.end)
-                    current_processor_slots.append(after_slot)
-                elif start != current_slot.start and end == current_slot.end:
-                    before_slot = Slot(None, processor, current_slot.start, start)
-                    current_processor_slots.append(before_slot)
+                    currentProcessorSlots.append(beforeSlot)
+                    currentProcessorSlots.append(afterSlot)
+                elif start == currentSlot.start and end != currentSlot.end:
+                    afterSlot = Slot(None, processor, end, currentSlot.end)
+                    currentProcessorSlots.append(afterSlot)
+                elif start != currentSlot.start and end == currentSlot.end:
+                    beforeSlot = Slot(None, processor, currentSlot.start, start)
+                    currentProcessorSlots.append(beforeSlot)
 
-                del current_processor_slots[i]
+                del currentProcessorSlots[i]
 
                 # sort all the slots in an increasing order based on start time
-                current_processor_slots.sort(key = lambda el: el.start, reverse = True)
+                currentProcessorSlots.sort(key = lambda el: el.start, reverse = True)
                 # store execution slot of task for easy retrieving
-                self.task_execution_slot[task.id] = new_slot
-                print("Task " + str(task.id) + ", processor " + str(processor.id) + ", processing_time " + str(computation_time) + ": start " + str(start) + ", end " + str(end))
+                self.taskExecutionSlot[task.id] = newSlot
+                print("Task " + str(task.id) + ", processor " + str(processor.id) + ", processingTime " + str(computationTime) + ": start " + str(start) + ", end " + str(end))
 
                 break
 
 
-    def can_add_slot(self, processor, task, start_time):
-        is_allowed_to_add_slot = False
+    def canAddSlot(self, processor, task, startTime):
+        isAllowedToAddSlot = False
 
-        computation_time = task.computation_required / processor.processing_rate
-        to_be_taken_slot = start_time + computation_time
+        computationTime = task.computationRequired / processor.processingRate
+        toBeTakenSlot = startTime + computationTime
 
-        current_processor_slots = self.processor_execution_slots[processor_id]
+        currentProcessorSlots = self.processorExecutionSlots[processorId]
 
-        for i in range(0, len(current_processor_slots)):
-            current_slot = current_processor_slots[i]
+        for i in range(0, len(currentProcessorSlots)):
+            currentSlot = currentProcessorSlots[i]
 
-            if current_slot.start <= start_time and current_slot.end >= to_be_taken_slot:
-                is_allowed_to_add_slot = True
+            if currentSlot.start <= startTime and currentSlot.end >= toBeTakenSlot:
+                isAllowedToAddSlot = True
                 break
 
-        return is_allowed_to_add_slot
+        return isAllowedToAddSlot
 
-    def get_best_slot_for_task_on_processor(self, processor, task):
-        ready_time = -1
+    def getBestSlotForTaskOnProcessor(self, processor, task):
+        readyTime = -1
 
         for i in range(0, len(task.predecessors)):
-            pred_task = task.predecessors[i][0]
-            pred_task_constraint = task.predecessors[i][1]
-            pred_processor = self.task_execution_slot[pred_task.id].processor
+            predTask = task.predecessors[i][0]
+            predTaskConstraint = task.predecessors[i][1]
+            predProcessor = self.taskExecutionSlot[predTask.id].processor
 
-            communication_time = ProcessorDAG.get_communication_time(pred_processor, processor, pred_task_constraint)
+            communicationTime = ProcessorDAG.getCommunicationTime(predProcessor, processor, predTaskConstraint)
 
-            predecessor_slot_end = self.task_execution_slot[pred_task.id].end
-            current_ready_time = predecessor_slot_end + communication_time
+            predecessorSlotEnd = self.taskExecutionSlot[predTask.id].end
+            currentReadyTime = predecessorSlotEnd + communicationTime
 
-            if current_ready_time > ready_time:
-                ready_time = current_ready_time
+            if currentReadyTime > readyTime:
+                readyTime = currentReadyTime
 
-        processing_time = task.computation_required / processor.processing_rate
+        processingTime = task.computationRequired / processor.processingRate
 
-        current_processor_slots = self.processor_execution_slots[processor.id]
+        currentProcessorSlots = self.processorExecutionSlots[processor.id]
 
-        for i in range(0, len(current_processor_slots)):
-            current_slot = current_processor_slots[i]
+        for i in range(0, len(currentProcessorSlots)):
+            currentSlot = currentProcessorSlots[i]
 
-            if current_slot.task == None:
-                actual_start = max(current_slot.start, ready_time)
-                actual_end = actual_start + processing_time
+            if currentSlot.task == None:
+                actualStart = max(currentSlot.start, readyTime)
+                actualEnd = actualStart + processingTime
 
-                if actual_end <= current_slot.end:
-                    return Slot(task, processor, actual_start, actual_end)
+                if actualEnd <= currentSlot.end:
+                    return Slot(task, processor, actualStart, actualEnd)
             else:
                 continue
 
@@ -124,6 +124,6 @@ class Schedule(object):
     def print_schedule(self):
         pass
 
-    def export(self, output_path):
+    def export(self, outputPath):
         pass
         

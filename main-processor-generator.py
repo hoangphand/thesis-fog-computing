@@ -1,8 +1,8 @@
-from processor_dag import ProcessorDAG
+from processorDag import ProcessorDAG
 import random
 
-processor_dag = ProcessorDAG()
-# processor_dag.random_init()
-# processor_dag.export_dag('exported-processors.dag')
-processor_dag.import_dag('exported-processors.dag')
-processor_dag.export_dag('imported-processors.dag')
+processorDag = ProcessorDAG()
+# processorDag.random_init()
+# processorDag.exportDag('exported-processors.dag')
+processorDag.importDag('exported-processors.dag')
+processorDag.exportDag('imported-processors.dag')

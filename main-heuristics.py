@@ -1,44 +1,44 @@
 # from __future__ import print_function
-from processor_dag import ProcessorDAG
-from task_dag import TaskDAG
+from processorDag import ProcessorDAG
+from taskDag import TaskDAG
 from heuristics import Heuristics
 import random
 
-processor_dag = ProcessorDAG()
-processor_dag.import_dag('exported-processors.dag')
+processorDag = ProcessorDAG()
+processorDag.importDag('exported-processors.dag')
 
-task_dag = TaskDAG()
-task_dag.import_dag('generated-task-dags/6.dag')
-task_dag.print_dag()
+taskDag = TaskDAG()
+taskDag.importDag('generated-task-dags/6.dag')
+taskDag.printDag()
 
-# ranks = Heuristics.prioritize_tasks(task_dag, processor_dag)
+# ranks = Heuristics.prioritize_tasks(taskDag, processorDag)
 # for i in range(0, len(ranks)):
 #     print(str(i) + ": " + str(ranks[i]))
 
-# sorted_indices = sorted(range(len(ranks)), key = ranks.__getitem__, reverse = True)
+# sortedIndices = sorted(range(len(ranks)), key = ranks.__getitem__, reverse = True)
 # for i in range(0, len(ranks)):
-#     print(str(sorted_indices[i]) + ": " + str(ranks[sorted_indices[i]]))
+#     print(str(sortedIndices[i]) + ": " + str(ranks[sortedIndices[i]]))
 
-schedule = Heuristics.HEFT(task_dag, processor_dag)
+schedule = Heuristics.HEFT(taskDag, processorDag)
 
 # for i in range(0, len(ranks)):
-#     # print(str(sorted_indices[i]) + ": " + str(ranks[sorted_indices[i]]))
-# # for i in range(0, len(schedule.task_execution_slot)):
-#     current_slot = schedule.task_execution_slot[sorted_indices[i]]
+#     # print(str(sortedIndices[i]) + ": " + str(ranks[sortedIndices[i]]))
+# # for i in range(0, len(schedule.taskExecutionSlot)):
+#     currentSlot = schedule.taskExecutionSlot[sortedIndices[i]]
 
-#     if current_slot != None:
-#         print("Task " + str(current_slot.task.id) + ", processor " + str(current_slot.processor.id) + ": " + str(current_slot.start) + ", " + str(current_slot.end))
+#     if currentSlot != None:
+#         print("Task " + str(currentSlot.task.id) + ", processor " + str(currentSlot.processor.id) + ": " + str(currentSlot.start) + ", " + str(currentSlot.end))
 #     else:
 #         print("Task " + str(i) + ": None")
 
-# for i in range(0, len(schedule.processor_execution_slots)):
+# for i in range(0, len(schedule.processorExecutionSlots)):
 #     print("Processor " + str(i) + ":")
-#     current_processor_slots = schedule.processor_execution_slots[i]
+#     currentProcessorSlots = schedule.processorExecutionSlots[i]
 
-#     for j in range(0, len(current_processor_slots)):
-#         current_slot = current_processor_slots[j]
+#     for j in range(0, len(currentProcessorSlots)):
+#         currentSlot = currentProcessorSlots[j]
 
-#         if current_slot.task == None:
-#             print("Task " + str(j) + ": " + str(current_slot.start) + ", " + str(current_slot.end))
+#         if currentSlot.task == None:
+#             print("Task " + str(j) + ": " + str(currentSlot.start) + ", " + str(currentSlot.end))
 #         else:
-#             print("None: " + str(current_slot.start) + ", " + str(current_slot.end))
+#             print("None: " + str(currentSlot.start) + ", " + str(currentSlot.end))
