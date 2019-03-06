@@ -23,6 +23,11 @@ class TaskDAG(object):
         self.width = 0
         # layers of nodes in the graph
         self.layers = [];
+        # deadline requirements
+        self.makespanHEFT = 0
+        self.k = 0
+        self.deadline = 0
+        self.arrivalTime = 0
 
         pass
 
@@ -325,11 +330,24 @@ class TaskDAG(object):
                 output.write("{1:<{0}s}".format(maxPredWidth, str(len(self.tasks[index].predecessors))))
                 output.write("\n")
                 for i in range(0, len(self.tasks[index].predecessors)):
-                    output.write("{1:<{0}s}\t\t\t\t\t{2}\t\t{3}".format(maxWidthPred, " ", 
-                                                                str(self.tasks[index].predecessors[i][0].id),
-                                                                str(self.tasks[index].predecessors[i][1])))
+                    if self.tasks[index].predecessors[i][1] == 0:
+                        output.write("{1:<{0}s}\t\t\t\t\t{2}\t\t{3}".format(maxWidthPred, " ", 
+                                                                    str(self.tasks[index].predecessors[i][0].id),
+                                                                    str(0)))
+                    else:
+                        output.write("{1:<{0}s}\t\t\t\t\t{2}\t\t{3}".format(maxWidthPred, " ", 
+                                                                    str(self.tasks[index].predecessors[i][0].id),
+                                                                    str(self.tasks[index].predecessors[i][1])))
                     output.write("\n")
 
+            output.write("makespanHEFT: " + str(self.makespanHEFT))
+            output.write("\n")
+            output.write("k: " + str(self.k))
+            output.write("\n")
+            output.write("deadline: " + str(self.deadline))
+            output.write("\n")
+            output.write("arrivalTime: " + str(self.arrivalTime))
+            output.write("\n")
             output.write("alpha: " + str(self.alpha))
             output.write("\n")
             output.write("height: " + str(self.height))
@@ -370,10 +388,22 @@ class TaskDAG(object):
                     currentPrecedence.addEdge(currentTask, precedentConstraints[1])
                     currentLineIndex += 1
 
+            # line of makespanHEFT
+            self.makespanHEFT = float(lines[currentLineIndex].split()[1])
+            currentLineIndex += 1
+            # line of k
+            self.k = float(lines[currentLineIndex].split()[1])
+            currentLineIndex += 1
+            # line of deadline
+            self.deadline = float(lines[currentLineIndex].split()[1])
+            currentLineIndex += 1
+            # line of arrivalTime
+            self.arrivalTime = float(lines[currentLineIndex].split()[1])
+            currentLineIndex += 1
             # line of alpha
             self.alpha = float(lines[currentLineIndex].split()[1])
             currentLineIndex += 1
-
+            # line of height
             self.height = int(lines[currentLineIndex].split()[1])
             currentLineIndex += 1
 
@@ -391,19 +421,28 @@ class TaskDAG(object):
 
         pass
 
+    def totalLinks(self):
+        totalLinks = 0
+        for i in range(0, len(self.tasks)):
+          for j in range(0, len(self.tasks[i].predecessors)):
+              if self.tasks[i].predecessors[j][1] != 0:
+                  totalLinks += 1
+
+        return totalLinks
+
     def removeTransitivity(self):
         for srcLayerIndex in range(1, len(self.layers) - 2):
             srcLayer = self.layers[srcLayerIndex]
 
             for srcTask in srcLayer:
-                print("from: " + str(srcTask.id))
+                # print("from: " + str(srcTask.id))
 
                 for destLayerIndex in range(srcLayerIndex + 2, len(self.layers)):
                     for destTask in self.layers[destLayerIndex]:
                         if destTask.id in [successor[0].id for successor in srcTask.successors]:
                             if self.checkIfTransitivity(srcTask, destTask):
-                                print("Transitivity! From " + str(srcTask.id) + " to " + str(destTask.id))
-                                
+                                # print("Transitivity! From " + str(srcTask.id) + " to " + str(destTask.id))
+                                srcTask.removeEdge(destTask)
                         else:
                             continue
 
@@ -445,66 +484,3 @@ class TaskDAG(object):
         pathIndex = pathIndex - 1
         visited[curTask.id] = False
         pass
-
-    # def removeTransitivity(self):
-    #     srcLayer = self.layers[1]
-    #     destLayer = self.layers[5]
-
-    #     srcTask = srcLayer[0]
-    #     destTask = destLayer[0]
-
-    #     # for i in range(0, len(srcTask.successors)):
-    #     #     print(str(srcTask.successors[i][0].layerId) + ": " + str(srcTask.successors[i][0].id))
-
-    #     print("from: " + str(srcTask.id))
-
-    #     for i in range(0, len(destLayer)):
-    #         print("to: " + str(destLayer[i].id))
-    #         self.printAllPaths(srcTask, destLayer[i])
-    #         # paths = self.getPathsBetweenTasks(srcTask, destLayer[i])
-
-    #         # if len(paths) > 0:
-    #         #     for path in paths:
-    #         #         print(path)
-
-    # def printAllPaths(self, srcTask, destTask):
-    #     visited = []
-    #     path = []
-
-    #     for i in range(0, len(self.tasks)):
-    #         visited.append(False)
-
-    #     for i in range(0, len(self.tasks)):
-    #         path.append(-1)
-
-    #     pathIndex = 0
-
-    #     self.printAllPathsUtil(srcTask, destTask, visited, path, pathIndex)
-
-    # def printAllPathsUtil(self, curTask, destTask, visited, path, pathIndex):
-    #     visited[curTask.id] = True
-    #     path[pathIndex] = curTask.id
-    #     pathIndex = pathIndex + 1
-
-    #     if curTask.id == destTask.id:
-    #         strPath = ""
-
-    #         for i in range(0, pathIndex):
-    #             strPath += str(path[i]) + " "
-
-    #         print(pathIndex)
-    #         print("path: " + strPath)
-    #     else:
-    #         miniStack = []
-
-    #         for task in curTask.successors[:]:
-    #             if task[0].layerId < destTask.layerId or task[0].id == destTask.id:
-    #                 miniStack.append(task[0])
-
-    #         for i in range(0, len(miniStack)):
-    #             if not visited[miniStack[i].id]:
-    #                 self.printAllPathsUtil(miniStack[i], destTask, visited, path, pathIndex)
-
-    #     pathIndex = pathIndex - 1
-    #     visited[curTask.id] = False
-    #     pass

@@ -8,32 +8,32 @@ class ProcessorDAG(object):
     NUMBER_OF_CLOUDS_UPPER_BOUND = 25
 
     """docstring for ProcessorDAG"""
-    def __init__(self):
+    def __init__(self, noOfFogs = 0, noOfClouds = 0):
         super(ProcessorDAG, self).__init__()
-        self.noOfFogs = 0
-        self.noOfClouds = 0
+        self.noOfFogs = noOfFogs
+        self.noOfClouds = noOfClouds
         self.processors = []
         
-    def random_init(self):
-        self.noOfFogs = int(random.uniform(self.__class__.NUMBER_OF_FOGS_LOWER_BOUND, 
-            self.__class__.NUMBER_OF_FOGS_UPPER_BOUND))
-        self.noOfClouds = int(random.uniform(self.__class__.NUMBER_OF_CLOUDS_LOWER_BOUND, 
-            self.__class__.NUMBER_OF_CLOUDS_UPPER_BOUND))
+    def randomInit(self):
+        # self.noOfFogs = int(random.uniform(self.__class__.NUMBER_OF_FOGS_LOWER_BOUND, 
+        #     self.__class__.NUMBER_OF_FOGS_UPPER_BOUND))
+        # self.noOfClouds = int(random.uniform(self.__class__.NUMBER_OF_CLOUDS_LOWER_BOUND, 
+        #     self.__class__.NUMBER_OF_CLOUDS_UPPER_BOUND))
 
         index = 0
         for i in range(0, self.noOfFogs):
-            newFog = Processor(id, True)
+            newFog = Processor(i, True)
             newFog.generateRandomValues()
             self.processors.append(newFog)
             index = i
 
         for i in range(index, self.noOfFogs + self.noOfClouds):
-            newCloud = Processor(id, False)
+            newCloud = Processor(i, False)
             newCloud.generateRandomValues()
             self.processors.append(newCloud)
 
-    def exportDag(self, output_file_path):
-        with open(output_file_path, "w") as output:
+    def exportDag(self, outputFilePath):
+        with open(outputFilePath, "w") as output:
             output.write(str(self.noOfFogs))
             output.write("\n")
             output.write(str(self.noOfClouds))
@@ -110,8 +110,7 @@ class ProcessorDAG(object):
         
         return mostPowerfulProcessor
 
-    @staticmethod
-    def getBandwidthToUse(fromProcessor, toProcessor):
+    def getBandwidthToUse(self, fromProcessor, toProcessor):
         bandwidthToUse = 0
 
         if fromProcessor.isFog and toProcessor.isFog:
@@ -119,17 +118,41 @@ class ProcessorDAG(object):
         else:
             bandwidthToUse = min(fromProcessor.wanUploadBandwidth, toProcessor.wanDownloadBandwidth)
         
+        # print(bandwidthToUse)
         return bandwidthToUse
 
-    @staticmethod
-    def getCommunicationTime(fromProcessor, toProcessor, amountOfData):
+    def getCommunicationTime(self, fromProcessor, toProcessor, amountOfData):
         communicationTime = 0
 
         if fromProcessor.id == toProcessor.id:
             communicationTime = 0
         else:           
-            bandwidthToUse = ProcessorDAG.getBandwidthToUse(fromProcessor, toProcessor)
+            bandwidthToUse = self.getBandwidthToUse(fromProcessor, toProcessor)
             
             communicationTime = amountOfData / bandwidthToUse
         
         return communicationTime
+
+    def getTotalUploadBandwidth(self):
+        totalBandwidth = 0
+
+        for i in range(0, self.noOfFogs + self.noOfClouds):
+            totalBandwidth += self.processors[i].wanUploadBandwidth
+
+        return totalBandwidth
+
+    def getTotalDownloadBandwidth(self):
+        totalBandwidth = 0
+
+        for i in range(0, self.noOfFogs + self.noOfClouds):
+            totalBandwidth += self.processors[i].wanDownloadBandwidth
+
+        return totalBandwidth
+
+    def getTotalProcessingRate(self):
+        totalProcessingRate = 0
+
+        for i in range(0, self.noOfFogs + self.noOfClouds):
+            totalProcessingRate += self.processors[i].processingRate
+
+        return totalProcessingRate

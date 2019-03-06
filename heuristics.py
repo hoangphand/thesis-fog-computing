@@ -16,7 +16,7 @@ class Heuristics(object):
         schedule = Schedule(taskDag, processorDag)
 
         # prioritize tasks
-        ranks = Heuristics.prioritize_tasks(taskDag, processorDag)
+        ranks = Heuristics.prioritizeTasks(taskDag, processorDag)
         sortedIndices = sorted(range(len(ranks)), key = ranks.__getitem__, reverse = True)
 
         # print(sortedIndices)
@@ -26,8 +26,8 @@ class Heuristics(object):
         entryTask = taskDag.tasks[unscheduledTasks.popleft()]
         # get the most powerful processor in the network
         mostPowerfulProcessor = processorDag.getMostPowerfulProcessor()
-
-        schedule.add_new_slot(mostPowerfulProcessor, entryTask, 0)
+        # allocate dummy entry task on the most powerful processing node at timestamp 0
+        schedule.addNewSlot(mostPowerfulProcessor, entryTask, 0)
 
         count = 0
         # loop through all unscheduled tasks
@@ -39,8 +39,10 @@ class Heuristics(object):
             bestAFT = sys.maxint
             bestProcessor = None
 
+            # loop through all processors to find the best processing execution location
             for i in range(0, len(processorDag.processors)):
                 currentProcessor = processorDag.processors[i]
+                # find the best slot on the current processor
                 currentBestSlot = schedule.getBestSlotForTaskOnProcessor(currentProcessor, currentTask)
 
                 if currentBestSlot.end < bestAFT:
@@ -48,12 +50,59 @@ class Heuristics(object):
                     bestSlot = currentBestSlot
                     bestProcessor = currentProcessor
 
-            schedule.add_new_slot(bestProcessor, currentTask, bestSlot.start)
+            schedule.addNewSlot(bestProcessor, currentTask, bestSlot.start)
+
+        schedule.aft = schedule.taskExecutionSlot[len(taskDag.tasks) - 1].end
 
         return schedule
 
     @staticmethod
-    def prioritize_tasks(taskDag, processorDag):
+    def DynamicHEFT(schedule, taskDag):
+        schedule = schedule.cloneTrialSchedule(taskDag)
+
+        # prioritize tasks
+        ranks = Heuristics.prioritizeTasks(schedule.taskDag, schedule.processorDag)
+        sortedIndices = sorted(range(len(ranks)), key = ranks.__getitem__, reverse = True)
+
+        # print(sortedIndices)
+        # init list of unscheduled tasks
+        unscheduledTasks = deque(sortedIndices)
+        # get the entry task by popping the first task from the unscheduled list
+        entryTask = schedule.taskDag.tasks[unscheduledTasks.popleft()]
+        # get the most powerful processor in the network
+        mostPowerfulProcessor = schedule.processorDag.getMostPowerfulProcessor()
+        # allocate dummy entry task on the most powerful processing node at timestamp 0
+        schedule.addNewSlot(mostPowerfulProcessor, entryTask, 0)
+
+        count = 0
+        # loop through all unscheduled tasks
+        while (len(unscheduledTasks) > 0):
+            currentTask = schedule.taskDag.tasks[unscheduledTasks.popleft()]
+
+            # calculate ready time to calculate current task on all the processors in the network
+            bestSlot = None
+            bestAFT = sys.maxint
+            bestProcessor = None
+
+            # loop through all processors to find the best processing execution location
+            for i in range(0, len(schedule.processorDag.processors)):
+                currentProcessor = schedule.processorDag.processors[i]
+                # find the best slot on the current processor
+                currentBestSlot = schedule.getBestSlotForTaskOnProcessor(currentProcessor, currentTask)
+
+                if currentBestSlot.end < bestAFT:
+                    bestAFT = currentBestSlot.end
+                    bestSlot = currentBestSlot
+                    bestProcessor = currentProcessor
+
+            schedule.addNewSlot(bestProcessor, currentTask, bestSlot.start)
+
+        schedule.aft = schedule.taskExecutionSlot[len(taskDag.tasks) - 1].end
+
+        return schedule
+
+    @staticmethod
+    def prioritizeTasks(taskDag, processorDag):
         totalProcessingRate = 0
         totalUploadBandwidth = 0
 

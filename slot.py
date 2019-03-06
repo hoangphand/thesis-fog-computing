@@ -9,6 +9,7 @@ class Slot(object):
 
     def print_slot(self):
         if self.task != None:
-            print("Task " + str(self.task.id) + ", processor " + str(self.processor.id) + ": " + str(self.start) + ", " + str(self.end))
+            print("Task " + str(self.task.id) + 
+                ", processor " + str(self.processor.id) + ": " + str(self.start) + ", " + str(self.end))
         else:
             print("Task None, processor " + str(self.processor.id) + ": " + str(self.start) + ", " + str(self.end))

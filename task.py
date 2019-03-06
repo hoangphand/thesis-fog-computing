@@ -45,9 +45,23 @@ class Task(object):
         self.addSuccessor(task, memoryConstraint)
         task.addPredecessor(self, memoryConstraint)
 
-    def removeEdge(self, task, memoryConstraint):
-        self.addSuccessor(task, memoryConstraint)
-        task.addPredecessor(self, memoryConstraint)
+    def removePredecessor(self, task):
+        for i in range(0, len(self.predecessors)):
+            if self.predecessors[i][0].id == task.id:
+                del self.predecessors[i]
+                return
+
+    def removeSuccessor(self, task):
+        for i in range(0, len(self.successors)):
+            if self.successors[i][0].id == task.id:
+                del self.successors[i]
+                return
+
+    def removeEdge(self, task):
+        self.removePredecessor(task)
+        self.removeSuccessor(task)
+        task.removePredecessor(self)
+        task.removeSuccessor(self)
 
     def generateRandomValues(self):
         memoryRequired = round(random.uniform(self.__class__.TASK_MEMORY_REQUIRED_LOWER_BOUND, 

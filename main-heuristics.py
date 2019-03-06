@@ -1,44 +1,41 @@
-# from __future__ import print_function
+from __future__ import print_function
+from __future__ import division
 from processorDag import ProcessorDAG
 from taskDag import TaskDAG
 from heuristics import Heuristics
 import random
 
 processorDag = ProcessorDAG()
-processorDag.importDag('exported-processors.dag')
+# processorDag.importDag('dataset-PHAM/processors.dag')
+processorDag.importDag('dataset/processors.dag')
+# processorDag.importDag('exported-processors.dag')
 
 taskDag = TaskDAG()
-taskDag.importDag('generated-task-dags/6.dag')
-taskDag.printDag()
-
-# ranks = Heuristics.prioritize_tasks(taskDag, processorDag)
-# for i in range(0, len(ranks)):
-#     print(str(i) + ": " + str(ranks[i]))
-
-# sortedIndices = sorted(range(len(ranks)), key = ranks.__getitem__, reverse = True)
-# for i in range(0, len(ranks)):
-#     print(str(sortedIndices[i]) + ": " + str(ranks[sortedIndices[i]]))
+# taskDag.importDag('dataset-PHAM/1.dag')
+taskDag.importDag('dataset/10.dag')
+# taskDag.importDag('exported-tasks.dag')
 
 schedule = Heuristics.HEFT(taskDag, processorDag)
+print("AFT: " + str(schedule.aft))
 
-# for i in range(0, len(ranks)):
-#     # print(str(sortedIndices[i]) + ": " + str(ranks[sortedIndices[i]]))
-# # for i in range(0, len(schedule.taskExecutionSlot)):
-#     currentSlot = schedule.taskExecutionSlot[sortedIndices[i]]
+print("Total computation cost: " + str(schedule.getTotalComputationCost()))
+print("Avg computation cost: " + str(schedule.getTotalComputationCost() / (len(taskDag.tasks) - 2)))
 
-#     if currentSlot != None:
-#         print("Task " + str(currentSlot.task.id) + ", processor " + str(currentSlot.processor.id) + ": " + str(currentSlot.start) + ", " + str(currentSlot.end))
-#     else:
-#         print("Task " + str(i) + ": None")
+print("Total communication cost: " + str(schedule.getTotalCommunicationCost()))
+print("Total links: " + str(taskDag.totalLinks()))
+print("Avg communication cost: " + str(schedule.getTotalCommunicationCost() / (taskDag.totalLinks())))
 
-# for i in range(0, len(schedule.processorExecutionSlots)):
-#     print("Processor " + str(i) + ":")
-#     currentProcessorSlots = schedule.processorExecutionSlots[i]
+print("No of tasks allocated on fog nodes: " + str(schedule.getNoOfTasksAllocatedToFogNodes()))
+print("No of tasks allocated on cloud nodes: " + str(schedule.getNoOfTasksAllocatedToCloudNodes()))
 
-#     for j in range(0, len(currentProcessorSlots)):
-#         currentSlot = currentProcessorSlots[j]
+for i in range(0, len(taskDag.tasks)):
+    taskComputationCost = schedule.getComputationCostOfTask(i)
+    maxPredCommunicationCost = schedule.getMaxPredCommunicationCost(i)
 
-#         if currentSlot.task == None:
-#             print("Task " + str(j) + ": " + str(currentSlot.start) + ", " + str(currentSlot.end))
-#         else:
-#             print("None: " + str(currentSlot.start) + ", " + str(currentSlot.end))
+    ccr = 0
+    if maxPredCommunicationCost != 0 and taskComputationCost != 0:
+        ccr = maxPredCommunicationCost / taskComputationCost
+
+    print("Task " + str(i) + ", computation cost: " + str(taskComputationCost) + 
+        ", max pred communication: " + str(maxPredCommunicationCost) +
+        ", ccr: " + str(ccr))

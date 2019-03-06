@@ -11,8 +11,10 @@ class Schedule(object):
         super(Schedule, self).__init__()
         self.taskDag = taskDag
         self.processorDag = processorDag
-        self.isScheduled = False
+        # self.isScheduled = False
+        # store execution slot of each task for easy retrieving
         self.taskExecutionSlot = []
+        # store all execution slots of each processor
         self.processorExecutionSlots = []
 
         for i in range(0, len(processorDag.processors)):
@@ -22,7 +24,10 @@ class Schedule(object):
         for i in range(0, len(taskDag.tasks)):
             self.taskExecutionSlot.append(None)
 
-    def add_new_slot(self, processor, task, startTime):
+        # actual finish time of schedule
+        self.aft = 0
+
+    def addNewSlot(self, processor, task, startTime):
         currentProcessorSlots = self.processorExecutionSlots[processor.id]
 
         computationTime = task.computationRequired / processor.processingRate
@@ -56,7 +61,9 @@ class Schedule(object):
                 currentProcessorSlots.sort(key = lambda el: el.start, reverse = True)
                 # store execution slot of task for easy retrieving
                 self.taskExecutionSlot[task.id] = newSlot
-                print("Task " + str(task.id) + ", processor " + str(processor.id) + ", processingTime " + str(computationTime) + ": start " + str(start) + ", end " + str(end))
+                # print("Task " + str(task.id) + 
+                #     ", processor " + str(processor.id) + 
+                #     ", processingTime " + str(computationTime) + ": start " + str(start) + ", end " + str(end))
 
                 break
 
@@ -78,15 +85,25 @@ class Schedule(object):
 
         return isAllowedToAddSlot
 
+    # this function calculates the earliest slot that a processor 
+    # will be able to execute a specified task
     def getBestSlotForTaskOnProcessor(self, processor, task):
         readyTime = -1
 
+        # loop through all predecessors of the current task
         for i in range(0, len(task.predecessors)):
+            # get predecessor task in the tuple of (task, dependency)
             predTask = task.predecessors[i][0]
+            # get dependency of current predecessor
             predTaskConstraint = task.predecessors[i][1]
+            # get processor which processes the current predecessor task
             predProcessor = self.taskExecutionSlot[predTask.id].processor
 
-            communicationTime = ProcessorDAG.getCommunicationTime(predProcessor, processor, predTaskConstraint)
+            # calculate communication time to transmit data dependency from 
+            # processor which is assigned to process the predecessor task to 
+            # the processor which is being considered to use to process the current task
+            communicationTime = self.processorDag.getCommunicationTime(predProcessor, 
+                processor, predTaskConstraint)
 
             predecessorSlotEnd = self.taskExecutionSlot[predTask.id].end
             currentReadyTime = predecessorSlotEnd + communicationTime
@@ -98,6 +115,7 @@ class Schedule(object):
 
         currentProcessorSlots = self.processorExecutionSlots[processor.id]
 
+        # find the earliest slot
         for i in range(0, len(currentProcessorSlots)):
             currentSlot = currentProcessorSlots[i]
 
@@ -112,16 +130,87 @@ class Schedule(object):
 
         return Slot(task, processor, -1, -1)
 
-    def get_ready_time_of_tasks(self,):
+    def getTotalComputationCost(self):
+        totalComputationCost = 0
+
+        for i in range(0, len(self.taskExecutionSlot)):
+          totalComputationCost += self.getComputationCostOfTask(i)
+
+        return totalComputationCost
+
+    def getTotalCommunicationCost(self):
+        totalCommunicationCost = 0
+
+        for indexLayer in range(0, len(self.taskDag.layers)):
+            for indexTask in range(0, len(self.taskDag.layers[indexLayer])):
+                currentTask = self.taskDag.layers[indexLayer][indexTask]
+
+                for indexPred in range(0, len(currentTask.predecessors)):
+                    currentPred = currentTask.predecessors[indexPred]
+
+                    tmp = self.processorDag.getCommunicationTime(
+                            self.taskExecutionSlot[currentPred[0].id].processor, 
+                            self.taskExecutionSlot[currentTask.id].processor, 
+                            currentPred[1])
+
+                    totalCommunicationCost += tmp
+
+        return totalCommunicationCost
+
+    def cloneTrialSchedule(self, taskDag):
+        newSchedule = Schedule(taskDag, self.processorDag)
+        newSchedule.processorExecutionSlots = self.processorExecutionSlots[:]
+
+        return newSchedule
+
+    def getComputationCostOfTask(self, taskId):
+        currentTask = self.taskExecutionSlot[taskId].task
+        currentProcessor = self.taskExecutionSlot[taskId].processor
+
+        computationCost = currentTask.computationRequired / currentProcessor.processingRate
+
+        return computationCost
+
+    def getMaxPredCommunicationCost(self, taskId):
+        maxCommunicationCost = -1
+
+        currentTask = self.taskDag.tasks[taskId]
+
+        for indexPred in range(0, len(currentTask.predecessors)):
+            currentPred = currentTask.predecessors[indexPred]
+
+            tmp = self.processorDag.getCommunicationTime(
+                    self.taskExecutionSlot[currentPred[0].id].processor, 
+                    self.taskExecutionSlot[currentTask.id].processor, 
+                    currentPred[1])
+
+            if maxCommunicationCost < tmp:
+                maxCommunicationCost = tmp
+
+        return maxCommunicationCost
+
+    def getNoOfTasksAllocatedToCloudNodes(self):
+        noOfAllocatedCloudNotes = 0
+
+        for i in range(1, len(self.taskDag.tasks) - 1):
+            if not self.taskExecutionSlot[i].processor.isFog:
+                noOfAllocatedCloudNotes += 1
+
+        return noOfAllocatedCloudNotes
+
+    def getNoOfTasksAllocatedToFogNodes(self):
+        return len(self.taskDag.tasks) - self.getNoOfTasksAllocatedToCloudNodes() - 2
+
+    def getReadyTimeOfTasks(self,):
         pass
 
     def makespan(self):
         pass
 
-    def cloud_cost(self):
+    def cloudCost(self):
         pass
 
-    def print_schedule(self):
+    def printSchedule(self):
         pass
 
     def export(self, outputPath):

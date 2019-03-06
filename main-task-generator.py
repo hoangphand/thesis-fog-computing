@@ -24,9 +24,11 @@ dag = TaskDAG()
 # print("len dag: " + str(len(dag.layers)))
 
 importedDag = TaskDAG()
-importedDag.importDag('generated-task-dags/' + str(id) + '.dag')
+importedDag.importDag('removedTransitivity.dag')
+# importedDag.importDag('generated-task-dags/' + str(id) + '.dag')
 print("len dag: " + str(len(importedDag.layers)))
 
 importedDag.removeTransitivity()
+# importedDag.exportDag('removedTransitivity.dag')
 
 # print(str(id) + ": " + str(alpha))

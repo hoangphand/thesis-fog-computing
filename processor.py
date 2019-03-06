@@ -7,11 +7,14 @@ class Processor(object):
     # BANDWIDTH_LAN_UPPER_BOUND = 1024
     BANDWIDTH_WAN_LOWER_BOUND = 10
     BANDWIDTH_WAN_UPPER_BOUND = 100
+    BANDWIDTH_WAN = [10, 100, 512, 1024]
+
     # metrics: MIPS (millions of instructions per second)
     PROCESSING_RATE_FOG_LOWER_BOUND = 10
     PROCESSING_RATE_FOG_UPPER_BOUND = 500
     PROCESSING_RATE_CLOUD_LOWER_BOUND = 250
     PROCESSING_RATE_CLOUD_UPPER_BOUND = 1500
+
     # metrics: MB (megabyte)
     RAM_FOG = [512, 1024]
     # RAM_FOG_LOWER_BOUND = 512
@@ -19,6 +22,7 @@ class Processor(object):
     RAM_CLOUD = [2048, 3072, 4096, 6144, 8192]
     # RAM_CLOUD_LOWER_BOUND = 2048
     # RAM_CLOUD_UPPER_BOUND = 8192
+
     # metrics: MB (megabyte)
     STORAGE_FOG_LOWER_BOUND = 100
     STORAGE_FOG_UPPER_BOUND = 1024
@@ -53,6 +57,8 @@ class Processor(object):
             self.storage = int(random.uniform(self.__class__.STORAGE_CLOUD_LOWER_BOUND, 
                                         self.__class__.STORAGE_CLOUD_UPPER_BOUND))
 
+        # self.wanUploadBandwidth = random.choice(self.__class__.BANDWIDTH_WAN)
+        # self.wanDownloadBandwidth = random.choice(self.__class__.BANDWIDTH_WAN)
         self.wanUploadBandwidth = int(random.uniform(self.__class__.BANDWIDTH_WAN_LOWER_BOUND, 
                                                     self.__class__.BANDWIDTH_WAN_UPPER_BOUND))
         self.wanDownloadBandwidth = int(random.uniform(self.__class__.BANDWIDTH_WAN_LOWER_BOUND, 
