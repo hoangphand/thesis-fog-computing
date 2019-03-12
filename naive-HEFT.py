@@ -19,14 +19,18 @@ for id in range(2, sizeOfDataSet + 1):
     taskDag.importDag(dirDataSet + '/' + str(id) + '.dag')
 
     tmpSchedule = Heuristics.DynamicHEFT(schedule, taskDag)
+    noOfClouds = tmpSchedule.getNoOfTasksAllocatedToCloudNodes()
+    noOfFogs = tmpSchedule.getNoOfTasksAllocatedToFogNodes()
 
     makespan = tmpSchedule.aft - taskDag.arrivalTime
 
     if makespan <= taskDag.deadline:
         noOfAcceptedRequests += 1
         schedule.processorExecutionSlots = tmpSchedule.processorExecutionSlots[:]
-        print(str(id) + ': accepted')
+        print(str(id) + ': accepted, ast: ' + str(tmpSchedule.taskExecutionSlot[0].start))
     else:
-        print(str(id) + ': rejected')
+        print(str(id) + ': rejected. makespan: ' + str(makespan) + ', deadline: ' + str(taskDag.deadline))
+
+    print('ccr: ' + str(taskDag.ccr) + ', tasks to cloud: ' + str(noOfClouds) + ', tasks to fog: ' + str(noOfFogs))
 
 print("Accepted: " + str(noOfAcceptedRequests))

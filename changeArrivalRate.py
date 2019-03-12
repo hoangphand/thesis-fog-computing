@@ -1,7 +1,7 @@
 from taskDag import TaskDAG
 
 sizeOfDataSet = 100
-poissonArrivalRate = 0.1
+poissonArrivalRate = 0.4
 arrivalTime = poissonArrivalRate
 dirDataSet = 'dataset'
 

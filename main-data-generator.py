@@ -26,6 +26,7 @@ processorDag.exportDag('dataset/processors.dag')
 # Generate task dags
 for id in range(1, noOfApplications + 1):
     # ccr
+    print(id)
     ccr = random.choice(randomCCR)
     alpha = random.choice(randomAlphas)
 
@@ -40,3 +41,5 @@ for id in range(1, noOfApplications + 1):
     taskDag.deadline = taskDag.makespanHEFT * taskDag.k
     taskDag.arrivalTime = arrivalTime
     taskDag.exportDag('dataset/' + str(taskDag.id) + '.dag')
+
+    arrivalTime = arrivalTime + poissonArrivalRate
