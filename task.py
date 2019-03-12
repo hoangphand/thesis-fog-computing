@@ -1,3 +1,4 @@
+from __future__ import division
 import random
 
 class Task(object):
@@ -39,9 +40,20 @@ class Task(object):
         self.addSuccessor(task, memoryConstraint)
         task.addPredecessor(self, memoryConstraint)
 
-    def addEdgeRandomConstraint(self, task):
-        memoryConstraint = round(random.uniform(self.__class__.TASK_MEMORY_CONSTRAINT_LOWER_BOUND, 
-                                                self.__class__.TASK_MEMORY_CONSTRAINT_UPPER_BOUND), 2)
+    def addEdgeRandomConstraint(self, task, ccr, processorDag):
+        avgBandwidth = processorDag.getAvgUploadBandwidth()
+        avgProcessingRate = processorDag.getAvgProcessingRate()
+
+        correspondingComm = round(ccr * (self.computationRequired * avgBandwidth) / avgProcessingRate, 2)
+        lowerBound = 0.9 * correspondingComm
+        upperBound = 1.1 * correspondingComm
+        memoryConstraint = round(random.uniform(lowerBound, upperBound), 2)
+
+        # memoryConstraint = round(ccr * (self.computationRequired * avgBandwidth) / avgProcessingRate, 2)
+
+        # memoryConstraint = round(random.uniform(self.__class__.TASK_MEMORY_CONSTRAINT_LOWER_BOUND, 
+        #                                         self.__class__.TASK_MEMORY_CONSTRAINT_UPPER_BOUND), 2)
+
         self.addSuccessor(task, memoryConstraint)
         task.addPredecessor(self, memoryConstraint)
 

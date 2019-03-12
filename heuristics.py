@@ -134,9 +134,9 @@ class Heuristics(object):
                     tmpMaxSuccessorCost = -1
 
                     for k in range(0, len(taskDag.layers[layerId][taskId].successors)):
-                        current_successor = taskDag.layers[layerId][taskId].successors[k][0]
-                        communication_cost = taskDag.layers[layerId][taskId].successors[k][1] / avgUploadBandwidth
-                        currentSuccessorCost = communication_cost + ranks[current_successor.id]
+                        currentSuccessor = taskDag.layers[layerId][taskId].successors[k][0]
+                        communicationCost = taskDag.layers[layerId][taskId].successors[k][1] / avgUploadBandwidth
+                        currentSuccessorCost = communicationCost + ranks[currentSuccessor.id]
 
                         if currentSuccessorCost > tmpMaxSuccessorCost:
                             tmpMaxSuccessorCost = currentSuccessorCost

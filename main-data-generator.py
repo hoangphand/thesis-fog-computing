@@ -10,8 +10,7 @@ noOfClouds = 25
 
 # For task dag
 randomAlphas = [0.5, 1.0, 1.5, 2.0]
-randomCCR = [0.1, 1, 10]
-applicationTypesRatio = [0.2, 0.3, 0.5]
+randomCCR = [0.1, 0.5, 1, 2, 10]
 noOfApplications = 100
 noOfTasks = 100
 # deadline requirements
@@ -26,11 +25,12 @@ processorDag.exportDag('dataset/processors.dag')
 
 # Generate task dags
 for id in range(1, noOfApplications + 1):
-    print("Id: " + str(id))
+    # ccr
+    ccr = random.choice(randomCCR)
     alpha = random.choice(randomAlphas)
 
     taskDag = TaskDAG()
-    taskDag.randomInitLayerBased(id, noOfTasks, alpha)
+    taskDag.randomInitLayerBased(id, noOfTasks, alpha, processorDag, ccr)
     taskDag.removeTransitivity()
 
     # deadline requirements
@@ -40,5 +40,3 @@ for id in range(1, noOfApplications + 1):
     taskDag.deadline = taskDag.makespanHEFT * taskDag.k
     taskDag.arrivalTime = arrivalTime
     taskDag.exportDag('dataset/' + str(taskDag.id) + '.dag')
-
-    arrivalTime = arrivalTime + poissonArrivalRate

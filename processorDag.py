@@ -1,3 +1,4 @@
+from __future__ import print_function
 import random
 from processor import Processor
 
@@ -156,3 +157,12 @@ class ProcessorDAG(object):
             totalProcessingRate += self.processors[i].processingRate
 
         return totalProcessingRate
+
+    def getAvgProcessingRate(self):
+        return self.getTotalProcessingRate() / (self.noOfClouds + self.noOfFogs)
+
+    def getAvgUploadBandwidth(self):
+        return self.getTotalUploadBandwidth() / (self.noOfClouds + self.noOfFogs)
+
+    def getAvgDownloadBandwidth(self):
+        return self.getTotalDownloadBandwidth() / (self.noOfClouds + self.noOfFogs)

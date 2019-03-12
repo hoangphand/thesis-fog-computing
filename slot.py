@@ -7,7 +7,7 @@ class Slot(object):
         self.start = start
         self.end = end
 
-    def print_slot(self):
+    def printSlot(self):
         if self.task != None:
             print("Task " + str(self.task.id) + 
                 ", processor " + str(self.processor.id) + ": " + str(self.start) + ", " + str(self.end))

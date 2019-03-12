@@ -12,7 +12,7 @@ processorDag.importDag('dataset/processors.dag')
 
 taskDag = TaskDAG()
 # taskDag.importDag('dataset-PHAM/1.dag')
-taskDag.importDag('dataset/10.dag')
+taskDag.importDag('ccrDag.dag')
 # taskDag.importDag('exported-tasks.dag')
 
 schedule = Heuristics.HEFT(taskDag, processorDag)
@@ -28,6 +28,7 @@ print("Avg communication cost: " + str(schedule.getTotalCommunicationCost() / (t
 print("No of tasks allocated on fog nodes: " + str(schedule.getNoOfTasksAllocatedToFogNodes()))
 print("No of tasks allocated on cloud nodes: " + str(schedule.getNoOfTasksAllocatedToCloudNodes()))
 
+totalCCR = 0
 for i in range(0, len(taskDag.tasks)):
     taskComputationCost = schedule.getComputationCostOfTask(i)
     maxPredCommunicationCost = schedule.getMaxPredCommunicationCost(i)
@@ -36,6 +37,9 @@ for i in range(0, len(taskDag.tasks)):
     if maxPredCommunicationCost != 0 and taskComputationCost != 0:
         ccr = maxPredCommunicationCost / taskComputationCost
 
+    totalCCR += ccr
     print("Task " + str(i) + ", computation cost: " + str(taskComputationCost) + 
         ", max pred communication: " + str(maxPredCommunicationCost) +
         ", ccr: " + str(ccr))
+
+print("avg CCR: " + str(totalCCR / (len(taskDag.tasks) - 2)))
