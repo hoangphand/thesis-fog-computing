@@ -11,6 +11,33 @@ processorDag.importDag('dataset/processors.dag')
 # processorDag.importDag('exported-processors.dag')
 
 randomCCR = [0.1, 0.5, 1, 2, 10]
+randomAlphas = [0.5, 1.0, 1.5, 2.0]
+noOfTasks = 100
+# deadline requirements
+arrivalTime = 0
+poissonArrivalRate = 0.1
+k = 1.2
+
+# Generate task dags
+for id in range(0, len(randomCCR)):
+    # ccr
+    ccr = random.choice(randomCCR)
+    print(ccr)
+    alpha = random.choice(randomAlphas)
+
+    taskDag = TaskDAG()
+    taskDag.randomInitLayerBased(id, noOfTasks, alpha, processorDag, ccr)
+    taskDag.removeTransitivity()
+
+    # deadline requirements
+    schedule = Heuristics.HEFT(taskDag, processorDag)
+    taskDag.makespanHEFT = schedule.aft
+    taskDag.k = k
+    taskDag.deadline = taskDag.makespanHEFT * taskDag.k
+    taskDag.arrivalTime = arrivalTime
+    taskDag.exportDag('ccr' + str(ccr) + '.dag')
+
+    arrivalTime = arrivalTime + poissonArrivalRate
 
 for i in range(0, len(randomCCR)):
 	ccr = randomCCR[i]
