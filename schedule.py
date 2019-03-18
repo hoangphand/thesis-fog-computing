@@ -59,7 +59,7 @@ class Schedule(object):
                 del currentProcessorSlots[i]
 
                 # sort all the slots in an increasing order based on start time
-                currentProcessorSlots.sort(key = lambda el: el.start, reverse = True)
+                currentProcessorSlots.sort(key = lambda el: el.start, reverse = False)
                 # store execution slot of task for easy retrieving
                 self.taskExecutionSlot[task.id] = newSlot
                 # print("Task " + str(task.id) + 
@@ -215,6 +215,27 @@ class Schedule(object):
             count += len(self.processorExecutionSlots[i])
 
         return count
+
+    def showProcessorSlots(self):
+        for i in range(0, len(self.processorExecutionSlots)):
+            currentProcessorSlots = self.processorExecutionSlots[i]
+
+            if len(currentProcessorSlots) > 1:
+                print("Processor " + str(i)),
+
+                for j in range(0, len(currentProcessorSlots)):
+                    currentSlot = currentProcessorSlots[j]
+
+                    print("["),
+
+                    if currentSlot.task == None:
+                        print("n"),
+                    else:
+                        print(str(currentSlot.task.id)),
+
+                    print(str(currentSlot.start) + "-" + str(currentSlot.end) + "]--"),
+                print()
+
 
     def getReadyTimeOfTasks(self,):
         pass

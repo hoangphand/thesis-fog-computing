@@ -21,14 +21,12 @@ class ProcessorDAG(object):
         # self.noOfClouds = int(random.uniform(self.__class__.NUMBER_OF_CLOUDS_LOWER_BOUND, 
         #     self.__class__.NUMBER_OF_CLOUDS_UPPER_BOUND))
 
-        index = 0
         for i in range(0, self.noOfFogs):
             newFog = Processor(i, True)
             newFog.generateRandomValues()
             self.processors.append(newFog)
-            index = i
 
-        for i in range(index, self.noOfFogs + self.noOfClouds):
+        for i in range(self.noOfFogs, self.noOfFogs + self.noOfClouds):
             newCloud = Processor(i, False)
             newCloud.generateRandomValues()
             self.processors.append(newCloud)
