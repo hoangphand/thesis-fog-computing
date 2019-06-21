@@ -4,9 +4,9 @@ import random
 class Task(object):
     """docstring for Task"""
 
-    # metrics: millions of instructions
-    TASK_COMPUTATION_REQUIRED_LOWER_BOUND = 2
-    TASK_COMPUTATION_REQUIRED_UPPER_BOUND = 60
+    # metrics: x 10^9 CPU cycles
+    TASK_COMPUTATION_REQUIRED_LOWER_BOUND = 0.1
+    TASK_COMPUTATION_REQUIRED_UPPER_BOUND = 1.5
     # metrics: MB (megabyte)
     TASK_MEMORY_REQUIRED_LOWER_BOUND = 0.5
     TASK_MEMORY_REQUIRED_UPPER_BOUND = 20
@@ -30,6 +30,8 @@ class Task(object):
 
         self.successors = []
 
+        self.priority = 0
+
     def addPredecessor(self, task, memoryConstraint):
         self.predecessors.append((task, memoryConstraint))
 
@@ -48,11 +50,6 @@ class Task(object):
         lowerBound = 0.9 * correspondingComm
         upperBound = 1.1 * correspondingComm
         memoryConstraint = round(random.uniform(lowerBound, upperBound), 2)
-
-        # memoryConstraint = round(ccr * (self.computationRequired * avgBandwidth) / avgProcessingRate, 2)
-
-        # memoryConstraint = round(random.uniform(self.__class__.TASK_MEMORY_CONSTRAINT_LOWER_BOUND, 
-        #                                         self.__class__.TASK_MEMORY_CONSTRAINT_UPPER_BOUND), 2)
 
         self.addSuccessor(task, memoryConstraint)
         task.addPredecessor(self, memoryConstraint)

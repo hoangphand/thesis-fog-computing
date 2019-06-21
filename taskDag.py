@@ -24,8 +24,7 @@ class TaskDAG(object):
         # layers of nodes in the graph
         self.layers = [];
         # deadline requirements
-        self.makespanHEFT = 0
-        self.k = 0
+        self.baseDeadline = 0
         self.deadline = 0
         self.arrivalTime = 0
         # ccr
@@ -183,9 +182,7 @@ class TaskDAG(object):
                                                                     str(self.tasks[index].predecessors[i][1])))
                     output.write("\n")
 
-            output.write("makespanHEFT: " + str(self.makespanHEFT))
-            output.write("\n")
-            output.write("k: " + str(self.k))
+            output.write("baseDeadline: " + str(self.baseDeadline))
             output.write("\n")
             output.write("deadline: " + str(self.deadline))
             output.write("\n")
@@ -233,11 +230,8 @@ class TaskDAG(object):
                     currentPrecedence.addEdge(currentTask, precedentConstraints[1])
                     currentLineIndex += 1
 
-            # line of makespanHEFT
-            self.makespanHEFT = float(lines[currentLineIndex].split()[1])
-            currentLineIndex += 1
-            # line of k
-            self.k = float(lines[currentLineIndex].split()[1])
+            # line of baseDeadline
+            self.baseDeadline = float(lines[currentLineIndex].split()[1])
             currentLineIndex += 1
             # line of deadline
             self.deadline = float(lines[currentLineIndex].split()[1])

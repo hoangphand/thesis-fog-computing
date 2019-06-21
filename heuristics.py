@@ -25,9 +25,9 @@ class Heuristics(object):
         # get the entry task by popping the first task from the unscheduled list
         entryTask = taskDag.tasks[unscheduledTasks.popleft()]
         # get the most powerful processor in the network
-        mostPowerfulProcessor = processorDag.getMostPowerfulProcessor()
-        # allocate dummy entry task on the most powerful processing node at timestamp 0
-        schedule.addNewSlot(mostPowerfulProcessor, entryTask, 0)
+        # mostPowerfulProcessor = processorDag.getMostPowerfulProcessor()
+        # allocate dummy entry task on the first processing node at timestamp 0
+        schedule.addNewSlot(schedule.processorCoreExecutionSlots[0][0].processorCore, entryTask, 0)
 
         # loop through all unscheduled tasks
         while (len(unscheduledTasks) > 0):
@@ -35,19 +35,19 @@ class Heuristics(object):
 
             # calculate ready time to calculate current task on all the processors in the network
             selectedSlot = None
-            selectedProcessor = None
+            selectedProcessorCore = None
 
             # loop through all processors to find the best processing execution location
-            for i in range(0, len(processorDag.processors)):
-                currentProcessor = processorDag.processors[i]
+            for i in range(0, len(schedule.processorCoreExecutionSlots)):
+                currentProcessorCore = schedule.processorCoreExecutionSlots[i][0].processorCore
                 # find the first-fit slot on the current processor for the current task
-                currentSelectedSlot = schedule.getFirstFitSlotForTaskOnProcessor(currentProcessor, currentTask)
+                currentSelectedSlot = schedule.getFirstFitSlotForTaskOnProcessorCore(currentProcessorCore, currentTask)
 
                 if selectedSlot == None or currentSelectedSlot.end < selectedSlot.end:
                     selectedSlot = currentSelectedSlot
-                    selectedProcessor = currentProcessor
+                    selectedProcessorCore = currentProcessorCore
 
-            schedule.addNewSlot(selectedProcessor, currentTask, selectedSlot.start)
+            schedule.addNewSlot(selectedProcessorCore, currentTask, selectedSlot.start)
 
         schedule.aft = schedule.taskExecutionSlot[len(taskDag.tasks) - 1].end
 

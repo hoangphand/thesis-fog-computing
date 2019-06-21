@@ -1,6 +1,7 @@
 from __future__ import division
 from processorDag import ProcessorDAG
 from processor import Processor
+from processorCore import ProcessorCore
 from taskDag import TaskDAG
 from slot import Slot
 import sys
@@ -15,11 +16,17 @@ class Schedule(object):
         # store execution slot of each task for easy retrieving
         self.taskExecutionSlot = []
         # store all execution slots of each processor
-        self.processorExecutionSlots = []
+        self.processorCoreExecutionSlots = []
 
+        schedulePositionId = 0
         for i in range(0, len(processorDag.processors)):
             currentProcessor = processorDag.processors[i]
-            self.processorExecutionSlots.append([Slot(None, currentProcessor, 0, sys.maxint)])
+
+            for j in range(0, currentProcessor.noOfCores):
+                self.processorCoreExecutionSlots.append([
+                    Slot(None, ProcessorCore(currentProcessor, j, schedulePositionId), 0, sys.maxint)
+                ])
+                schedulePositionId += 1
 
         for i in range(0, len(taskDag.tasks)):
             self.taskExecutionSlot.append(None)
@@ -28,38 +35,38 @@ class Schedule(object):
         self.aft = 0
 
     # add a new slot for a task on a processor at time startTime
-    def addNewSlot(self, processor, task, startTime):
-        currentProcessorSlots = self.processorExecutionSlots[processor.id]
+    def addNewSlot(self, processorCore, task, startTime):
+        currentProcessorCoreSlots = self.processorCoreExecutionSlots[processorCore.schedulePositionId]
 
-        computationTime = task.computationRequired / processor.processingRate
+        computationTime = task.computationRequired / processorCore.processor.processingRate
         endTime = startTime + computationTime
 
-        for i in range(0, len(currentProcessorSlots)):
-            currentSlot = currentProcessorSlots[i]
+        for i in range(0, len(currentProcessorCoreSlots)):
+            currentSlot = currentProcessorCoreSlots[i]
             # find the first slot on the processor that fits the startTime and endTime
             if currentSlot.task == None and currentSlot.start <= startTime and currentSlot.end >= endTime:
-                newSlot = Slot(task, processor, startTime, endTime)
-                currentProcessorSlots.append(newSlot)
+                newSlot = Slot(task, processorCore, startTime, endTime)
+                currentProcessorCoreSlots.append(newSlot)
 
                 if startTime != currentSlot.start and endTime != currentSlot.end:
-                    slotBefore = Slot(None, processor, currentSlot.start, startTime)
-                    slotAfter = Slot(None, processor, endTime, currentSlot.end)
+                    slotBefore = Slot(None, processorCore, currentSlot.start, startTime)
+                    slotAfter = Slot(None, processorCore, endTime, currentSlot.end)
 
-                    currentProcessorSlots.append(slotBefore)
-                    currentProcessorSlots.append(slotAfter)
+                    currentProcessorCoreSlots.append(slotBefore)
+                    currentProcessorCoreSlots.append(slotAfter)
                 elif startTime == currentSlot.start and endTime != currentSlot.end:
-                    slotAfter = Slot(None, processor, endTime, currentSlot.end)
+                    slotAfter = Slot(None, processorCore, endTime, currentSlot.end)
 
-                    currentProcessorSlots.append(slotAfter)
+                    currentProcessorCoreSlots.append(slotAfter)
                 elif startTime != currentSlot.start and endTime == currentSlot.end:
-                    slotBefore = Slot(None, processor, currentSlot.start, startTime)
+                    slotBefore = Slot(None, processorCore, currentSlot.start, startTime)
 
-                    currentProcessorSlots.append(slotBefore)
+                    currentProcessorCoreSlots.append(slotBefore)
 
-                del currentProcessorSlots[i]
+                del currentProcessorCoreSlots[i]
 
                 # sort all the slots in an increasing order based on start time
-                currentProcessorSlots.sort(key = lambda el: el.start, reverse = False)
+                currentProcessorCoreSlots.sort(key = lambda el: el.start, reverse = False)
                 # store execution slot of task for easy retrieving
                 self.taskExecutionSlot[task.id] = newSlot
                 # print("Task " + str(task.id) + 
@@ -70,7 +77,7 @@ class Schedule(object):
 
     # this function calculates the earliest slot that a processor 
     # will be able to execute a specified task
-    def getFirstFitSlotForTaskOnProcessor(self, processor, task):
+    def getFirstFitSlotForTaskOnProcessorCore(self, processorCore, task):
         # the ready time of the task at which
         # all required input data has arrived at the current processor
         readyTime = -1
@@ -83,13 +90,13 @@ class Schedule(object):
             # get dependency of current predecessor
             predTaskConstraint = task.predecessors[i][1]
             # get processor which processes the current predecessor task
-            predProcessor = self.taskExecutionSlot[predTask.id].processor
+            predProcessorCore = self.taskExecutionSlot[predTask.id].processorCore
 
             # calculate communication time to transmit data dependency from 
             # processor which is assigned to process the predecessor task to 
             # the processor which is being considered to use to process the current task
-            communicationTime = self.processorDag.getCommunicationTime(predProcessor, 
-                processor, predTaskConstraint)
+            communicationTime = self.processorDag.getCommunicationTimeBetweenCores(predProcessorCore, 
+                processorCore, predTaskConstraint)
 
             predecessorSlotEnd = self.taskExecutionSlot[predTask.id].end
             currentReadyTime = predecessorSlotEnd + communicationTime
@@ -97,13 +104,13 @@ class Schedule(object):
             if currentReadyTime > readyTime:
                 readyTime = currentReadyTime
 
-        processingTime = task.computationRequired / processor.processingRate
+        processingTime = task.computationRequired / processorCore.processor.processingRate
 
-        currentProcessorSlots = self.processorExecutionSlots[processor.id]
+        currentProcessorCoreSlots = self.processorCoreExecutionSlots[processorCore.schedulePositionId]
 
         # find the earliest slot
-        for i in range(0, len(currentProcessorSlots)):
-            currentSlot = currentProcessorSlots[i]
+        for i in range(0, len(currentProcessorCoreSlots)):
+            currentSlot = currentProcessorCoreSlots[i]
 
             if currentSlot.task == None:
                 actualStart = max(currentSlot.start, readyTime)
@@ -111,12 +118,12 @@ class Schedule(object):
 
                 if actualEnd <= currentSlot.end:
                     # return the first fit slot for the task on the current processor
-                    return Slot(task, processor, actualStart, actualEnd)
+                    return Slot(task, processorCore, actualStart, actualEnd)
             else:
                 continue
 
         print("nothing")
-        return Slot(task, processor, -1, -1)
+        return Slot(task, processorCore, -1, -1)
 
     def getTotalComputationCost(self):
         totalComputationCost = 0
@@ -136,9 +143,9 @@ class Schedule(object):
                 for indexPred in range(0, len(currentTask.predecessors)):
                     currentPred = currentTask.predecessors[indexPred]
 
-                    tmp = self.processorDag.getCommunicationTime(
-                            self.taskExecutionSlot[currentPred[0].id].processor, 
-                            self.taskExecutionSlot[currentTask.id].processor, 
+                    tmp = self.processorDag.getCommunicationTimeBetweenCores(
+                            self.taskExecutionSlot[currentPred[0].id].processorCore, 
+                            self.taskExecutionSlot[currentTask.id].processorCore, 
                             currentPred[1])
 
                     totalCommunicationCost += tmp
@@ -147,13 +154,13 @@ class Schedule(object):
 
     def cloneTrialSchedule(self, taskDag):
         newSchedule = Schedule(taskDag, self.processorDag)
-        newSchedule.processorExecutionSlots = self.processorExecutionSlots[:]
+        newSchedule.processorCoreExecutionSlots = self.processorCoreExecutionSlots[:]
 
         return newSchedule
 
     def getComputationCostOfTask(self, taskId):
         currentTask = self.taskExecutionSlot[taskId].task
-        currentProcessor = self.taskExecutionSlot[taskId].processor
+        currentProcessor = self.taskExecutionSlot[taskId].processorCore.processor
 
         computationCost = currentTask.computationRequired / currentProcessor.processingRate
 
@@ -167,9 +174,9 @@ class Schedule(object):
         for indexPred in range(0, len(currentTask.predecessors)):
             currentPred = currentTask.predecessors[indexPred]
 
-            tmp = self.processorDag.getCommunicationTime(
-                    self.taskExecutionSlot[currentPred[0].id].processor, 
-                    self.taskExecutionSlot[currentTask.id].processor, 
+            tmp = self.processorDag.getCommunicationTimeBetweenCores(
+                    self.taskExecutionSlot[currentPred[0].id].processorCore, 
+                    self.taskExecutionSlot[currentTask.id].processorCore, 
                     currentPred[1])
 
             if maxCommunicationCost < tmp:
@@ -181,7 +188,7 @@ class Schedule(object):
         noOfAllocatedCloudNotes = 0
 
         for i in range(1, len(self.taskDag.tasks) - 1):
-            if not self.taskExecutionSlot[i].processor.isFog:
+            if not self.taskExecutionSlot[i].processorCore.processor.isFog:
                 noOfAllocatedCloudNotes += 1
 
         return noOfAllocatedCloudNotes
@@ -189,18 +196,18 @@ class Schedule(object):
     def getNoOfTasksAllocatedToFogNodes(self):
         return len(self.taskDag.tasks) - self.getNoOfTasksAllocatedToCloudNodes() - 2
 
-    def getFirstProcessorFreeAt(self, time):
-        selectedProcessor = None
+    def getFirstProcessorCoreFreeAt(self, time):
+        selectedProcessorCore = None
         earliestStartTime = sys.maxint
 
-        for processorId in range(0, len(self.processorDag.processors)):
-            for slotId in range(0, len(self.processorExecutionSlots[processorId])):
-                currentSlot = self.processorExecutionSlots[processorId][slotId]
+        for processorCoreId in range(0, len(self.processorCoreExecutionSlots)):
+            for slotId in range(0, len(self.processorCoreExecutionSlots[processorCoreId])):
+                currentSlot = self.processorCoreExecutionSlots[processorCoreId][slotId]
 
                 if currentSlot != None and currentSlot.start <= time:
                     if currentSlot.start < earliestStartTime:
                         earliestStartTime = currentSlot.start
-                        selectedProcessor = self.processorDag.processors[processorId]
+                        selectedProcessorCore = self.processorCoreExecutionSlots[processorCoreId].processorCore
                     else:
                         continue
                 else:
@@ -212,13 +219,13 @@ class Schedule(object):
         count = 0
 
         for i in range(0, len(self.processorDag.processors)):
-            count += len(self.processorExecutionSlots[i])
+            count += len(self.processorCoreExecutionSlots[i])
 
         return count
 
     def showProcessorSlots(self):
-        for i in range(0, len(self.processorExecutionSlots)):
-            currentProcessorSlots = self.processorExecutionSlots[i]
+        for i in range(0, len(self.processorCoreExecutionSlots)):
+            currentProcessorSlots = self.processorCoreExecutionSlots[i]
 
             if len(currentProcessorSlots) > 1:
                 print("Processor " + str(i)),
